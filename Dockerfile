@@ -1,5 +1,5 @@
-ARG dpdk_version=21.02
-ARG pktgen_version=21.02.0
+ARG dpdk_version=20.11.3
+ARG pktgen_version=20.11.3
 
 FROM ubuntu:20.04 as build
 ARG dpdk_version
@@ -13,7 +13,7 @@ RUN apt-get update \
 
 ENV DPDK_VER=$dpdk_version
 ENV PKTGEN_VER=$pktgen_version
-ENV RTE_SDK=/opt/dpdk-$DPDK_VER
+ENV RTE_SDK=/opt/dpdk-stable-$DPDK_VER
 RUN echo DPDK_VER=${DPDK_VER}
 RUN echo PKTGEN_VER=${PKTGEN_VER}
 
@@ -35,11 +35,11 @@ RUN sed -i 's/#  error Platform.*//' /usr/local/include/rte_spinlock.h
 RUN sed -i 's/#  error Platform.*//' /usr/local/include/rte_atomic_32.h
 
 # downlaod and unpack pktgen
-RUN wget -q https://dpdk.org/browse/apps/pktgen-dpdk/snapshot/pktgen-$PKTGEN_VER.tar.gz \
-   && tar xf pktgen-$PKTGEN_VER.tar.gz
+RUN wget -q https://git.dpdk.org/apps/pktgen-dpdk/snapshot/pktgen-dpdk-pktgen-$PKTGEN_VER.tar.gz \
+   && tar xf pktgen-dpdk-pktgen-$PKTGEN_VER.tar.gz
 
 # building pktgen
-RUN cd pktgen-$PKTGEN_VER \
+RUN cd pktgen-dpdk-pktgen-$PKTGEN_VER \
       && tools/pktgen-build.sh clean \
       && tools/pktgen-build.sh buildlua \
       && cp -r usr/local /usr/ \
@@ -56,6 +56,3 @@ COPY --from=build /usr/local /usr/local/
 RUN apt-get update \
   && apt-get -y --no-install-recommends install liblua5.3 libnuma-dev pciutils libpcap-dev python3 iproute2 \
   && ldconfig
-
-ENTRYPOINT ["/usr/local/bin/pktgen"]
-CMD ["-h"]
